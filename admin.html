@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniBank · Administración</title>
+<meta name="minibank-release" content="2026-11-03.2">
+<meta name="theme-color" content="#0B67D7">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<style>
+:root{--navy:#062A66;--blue:#0B67D7;--yellow:#FFD400;--green:#1FAF67;--pink:#E55A8C;--light:#F4F8FF;--muted:#7A879C;--card:#fff;--border:rgba(6,42,102,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--light);color:var(--navy)}button,input{font:inherit}.app{max-width:980px;margin:0 auto;padding:14px}.hidden{display:none!important}.hero{background:linear-gradient(135deg,#075CC7,#0A83ED);color:#fff;border-radius:24px;padding:22px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 32px rgba(6,42,102,.15)}.avatar{width:72px;height:72px;border-radius:50%;background:#fff3;border:4px solid #fff;outline:3px solid var(--yellow);display:grid;place-items:center;font-size:34px;flex:0 0 auto}.hero h1{margin:0;font-size:1.9rem}.hero p{margin:5px 0 0;opacity:.95}.total{margin:16px 0;background:linear-gradient(135deg,#FFF9D8,#FFEEA0);border:1px solid #FFD64D;border-radius:20px;padding:18px}.total .value{font-size:2rem;font-weight:900;color:var(--blue)}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 6px 20px rgba(6,42,102,.06)}.bucket-title{font-weight:900}.bucket-value{font-size:1.5rem;font-weight:900;margin:6px 0}.muted{color:var(--muted);font-size:.84rem}.pending{margin-top:16px;background:#fffdf2;border:2px solid #FFD64D;border-radius:20px;padding:16px}.pending-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.pending-amount{font-size:1.75rem;font-weight:900;color:var(--blue)}.allocation{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.alloc{text-align:center;background:#fff;border:1px solid var(--border);border-radius:16px;padding:12px}.alloc label{display:block;font-weight:900;margin-bottom:8px}.alloc input{width:100%;min-width:0;text-align:center;border:1px solid #cfd9ea;border-radius:12px;padding:11px 8px;font-weight:900;font-size:1.05rem;color:var(--navy);background:#fff}.auto{min-height:46px;display:grid;place-items:center;background:#FFF1F6;border:1px solid #F2BDD1;border-radius:12px;color:var(--pink);font-weight:900;font-size:1.05rem}.summary{text-align:center;color:#405a7a;font-size:.9rem;margin:12px 0}.primary{border:0;border-radius:12px;background:#ff5a4f;color:#fff;font-weight:900;padding:12px 16px;cursor:pointer;width:100%}.sections{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:16px}.section-btn{background:#fff;border:1px solid #ccd6e7;padding:10px;border-radius:10px;font-weight:800;cursor:pointer}.section-btn.active{background:#eaf3ff;border-color:#8abcf4;color:var(--blue)}.panel{margin-top:12px}.chart-wrap{background:#fff;border-radius:18px;padding:14px;border:1px solid var(--border)}canvas{width:100%;height:260px}.login{max-width:420px;margin:60px auto;background:#fff;padding:22px;border-radius:20px;box-shadow:0 12px 30px rgba(6,42,102,.09)}.login input{width:100%;padding:12px;border:1px solid #ccd6e7;border-radius:10px;margin:10px 0}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.linkbtn{border:0;background:none;color:var(--blue);font-weight:800;cursor:pointer}.status{margin:10px 0;padding:10px 12px;border-radius:10px;background:#eef6ff;color:#31527d;font-size:.9rem}@media(max-width:700px){.grid3,.allocation{grid-template-columns:repeat(3,minmax(0,1fr))}.card{padding:12px}.bucket-value{font-size:1.15rem}.bucket-title{font-size:.9rem}.hero h1{font-size:1.5rem}.avatar{width:60px;height:60px}.alloc{padding:8px}.alloc label{font-size:.86rem}.alloc input,.auto{font-size:.92rem}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.hero,.total,.card,.chart-wrap{animation:rise .5s ease both}.section-btn{transition:transform .2s,background .2s}.section-btn:active{transform:scale(.97)}.feature{background:#fff;border-radius:18px;padding:18px;margin-top:14px;box-shadow:0 8px 26px #062a6612}.feature h3{margin-top:0}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#f2f7ff;border-radius:12px;padding:12px}.stat b{display:block;color:#0b67d7;font-size:1.25rem}.tx{display:flex;justify-content:space-between;gap:8px;padding:11px 0;border-bottom:1px solid #e6edf6}.tx small{display:block;color:#7a879c}.nav{display:flex;gap:7px;overflow:auto;margin:14px 0}.nav button{white-space:nowrap;border:1px solid #d2deef;background:#fff;border-radius:30px;padding:10px;font-weight:800}.nav .active{background:#062a66;color:#fff}input[type=range]{width:100%;accent-color:#0b67d7}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important}}
+/* MiniBank refined interface */
+:root{--navy:#102c53;--blue:#116bd6;--yellow:#ffd83d;--green:#18a875;--pink:#dc5a88;--light:#f5f7fc;--muted:#73839b;--border:#e6ecf4;--card:#fff}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#f7faff 0%,#f1f5fb 100%);letter-spacing:-.012em;-webkit-font-smoothing:antialiased}
+.app{max-width:960px;padding:20px 16px 90px}
+.topbar{padding:7px 2px 19px;margin-bottom:7px;border-bottom:1px solid #e3eaf3}
+.topbar strong{font-size:1.24rem;font-weight:850;letter-spacing:-.04em}
+.linkbtn{font-size:.86rem;font-weight:750}
+#childSelector{display:flex;gap:8px;margin:10px 0 14px}
+#childSelector .section-btn{min-width:0;flex:1;max-width:180px;border-radius:13px;background:white;padding:13px 18px;color:#355273;font-size:.96rem;border:1px solid #e2e9f2;box-shadow:none}
+#childSelector .section-btn:focus-visible{outline:3px solid #8ebdf7;outline-offset:2px}
+#childSelector .section-btn.active{background:#e8f2ff;color:#0965ca;border-color:#93c3f8}
+.nav{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 0 17px;padding:4px 0 8px;border-bottom:1px solid #e7edf5}
+.nav::-webkit-scrollbar{display:none}
+.nav button{border:0;border-radius:12px;padding:11px 15px;background:transparent;color:#657d9b;font-weight:750;letter-spacing:-.015em;transition:background .2s,color .2s,transform .2s}
+.nav button.active{background:#e5f0ff;color:#0d63c6;box-shadow:inset 0 0 0 1px #c7dffc}
+.nav button:active{transform:scale(.97)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#0759ba,#117ce5);border-radius:24px;padding:25px 23px;box-shadow:0 15px 32px #0a65c31f}
+.hero:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-100px;top:-130px;background:radial-gradient(circle,#ffffff27,transparent 72%);pointer-events:none}
+.hero h1{font-size:clamp(1.55rem,5vw,2.15rem);letter-spacing:-.045em;font-weight:850}
+.hero p{line-height:1.55;font-size:.97rem}
+.avatar{background:#ffffff2b;box-shadow:0 5px 15px #002e6e25}
+.total{margin:17px 0 16px;border-radius:22px;padding:23px;background:linear-gradient(115deg,#fff9e3,#fff0b1);border:1px solid #f6e29a;box-shadow:none}
+.total .value{font-size:clamp(2.2rem,7vw,3.15rem);line-height:1.24;font-weight:850;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.total .muted{color:#7b7e87}
+.grid3{gap:10px}
+.card,.feature,.chart-wrap{border:1px solid #e7ecf3;border-radius:20px;background:#fff;box-shadow:0 5px 24px #173f6e0a}
+.card{padding:18px 15px;min-height:130px}
+.bucket-title{font-size:.94rem;font-weight:800;letter-spacing:-.02em}
+.bucket-value{font-size:clamp(1.1rem,3.6vw,1.65rem);letter-spacing:-.04em;font-weight:850;line-height:1.25;overflow-wrap:anywhere;margin:12px 0 9px;font-variant-numeric:tabular-nums}
+.muted{line-height:1.5}
+.feature{padding:22px;margin-top:14px}
+.feature h3{font-size:1.15rem;letter-spacing:-.035em;font-weight:850;margin-bottom:15px}
+.stats{gap:9px}
+.stat{background:#f4f8ff;border:1px solid #e9f0fa;border-radius:15px;padding:15px 12px;font-size:.83rem;color:#7085a0;line-height:1.45}
+.stat b{color:#126acb;font-size:clamp(1rem,3.4vw,1.35rem);letter-spacing:-.035em;font-variant-numeric:tabular-nums;margin-top:5px}
+.tx{align-items:center;border-bottom:1px solid #edf1f6;padding:13px 0}
+.tx:last-child{border:0}
+.tx b{font-size:.9rem}
+.tx small{font-size:.77rem;margin-top:4px}
+.section-btn,.primary{transition:transform .18s,background .18s,box-shadow .18s}
+.section-btn:active,.primary:active{transform:scale(.985)}
+.primary{background:#0e6dd5;border-radius:14px;box-shadow:0 7px 16px #0e6dd521}
+.primary:hover{background:#075bb8}
+#retryData{display:inline-flex;align-items:center;padding:7px 0;font-size:.84rem;opacity:.85}
+.pending{background:#fffbeb;border-color:#f7dc82;box-shadow:none}
+.chart-wrap{padding:18px}
+.login{border:1px solid #e5ebf3;box-shadow:0 15px 45px #123a6c12}
+.status{border-radius:13px}
+@keyframes softAppear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hero,.total,.card,.feature,.chart-wrap{animation:softAppear .38s ease both}
+@media(max-width:560px){.app{padding:15px 13px 70px}.topbar{margin-bottom:4px}.hero{padding:22px 17px}.grid3{gap:8px}.card{padding:13px 10px;min-height:125px}.bucket-title{font-size:.82rem}.bucket-value{font-size:1.04rem}.card .muted{font-size:.72rem}.feature{padding:17px}.nav button{padding:10px 12px;font-size:.85rem}.total{padding:21px 19px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+.allowance-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.allowance-head h3{font-size:1.8rem;margin:3px 0 12px;color:#0e65c8}.allowance-head h3 small{font-size:.85rem;color:#8290a2;font-weight:500}.eyebrow{font-size:.69rem;font-weight:800;letter-spacing:.11em;color:#8a98aa}.allowance-pill{font-size:.7rem;color:#246db8;background:#eaf3ff;border-radius:20px;padding:6px 9px}.allowance-bar{display:flex;overflow:hidden;border-radius:12px;height:10px;background:#edf1f7;gap:2px}.allowance-bar span{height:100%}.allowance-legend{display:flex;justify-content:space-between;gap:6px;margin-top:14px}.allowance-legend span{font-size:.82rem;font-weight:800;color:#244466}.allowance-legend small{display:block;color:#7b8a9e;font-size:.7rem;font-weight:500;margin:3px 0 0 22px}.chart-legend{display:flex;gap:17px;flex-wrap:wrap;font-size:.76rem;color:#71839a;margin:12px 0 6px}.chart-legend span{display:flex;align-items:center;gap:6px}.chart-legend i{display:inline-block;width:19px;height:3px;border-radius:2px}.legend-blue{background:#1478df}.legend-gray{background:#91a4bc}#growthChart{display:block;width:100%;height:284px}@media(max-width:420px){.allowance-legend span{font-size:.73rem}.allowance-legend small{margin-left:0}}
+/* Personalización por niño: temática sutil, sin sacrificar legibilidad */
+.photo-controls{display:flex;align-items:center;gap:10px;margin:-3px 0 13px;flex-wrap:wrap}.photo-controls span{font-size:.72rem;color:#8190a5}.photo-button{border:1px solid #dfe8f3;border-radius:999px;background:#fff;color:#456583;padding:8px 13px;font-size:.78rem;font-weight:750;cursor:pointer}
+.avatar{overflow:hidden;isolation:isolate}.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+body[data-child-theme=kitty]{--navy:#673854;--blue:#d45491;--green:#46a88a;--light:#fff8fc;background:linear-gradient(180deg,#fff9fd,#fff0f7)}
+body[data-child-theme=kitty] .hero{background:linear-gradient(120deg,#f08ab8,#d85d9a)}
+body[data-child-theme=kitty] .hero:before{content:'♡  ✿  ♡';position:absolute;right:18px;top:10px;color:#fff7;font-size:1.5rem;letter-spacing:8px}
+body[data-child-theme=kitty] .total{background:linear-gradient(120deg,#fff7fb,#ffe1ef);border-color:#f7c5dc}
+body[data-child-theme=kitty] .nav button.active,body[data-child-theme=kitty] #childSelector .section-btn.active{background:#ffe5f1;color:#b93d7b;border-color:#f3b7d1}
+body[data-child-theme=kitty] .stat{background:#fff2f8;border-color:#fce4ef}
+body[data-child-theme=kitty] .stat b,body[data-child-theme=kitty] .total .value{color:#cb4c88}
+body[data-child-theme=kitty] .avatar{outline-color:#fff0f7}
+body[data-child-theme=minecraft]{--navy:#23462d;--blue:#347a42;--green:#388d4b;--light:#f4faf3;background:linear-gradient(180deg,#f8fbf5,#eaf4e8)}
+body[data-child-theme=minecraft] .hero{background:linear-gradient(120deg,#245a39,#3b9652)}
+body[data-child-theme=minecraft] .hero:after{border-radius:0;opacity:.5;background:repeating-linear-gradient(0deg,#ffffff17 0 24px,transparent 24px 48px),repeating-linear-gradient(90deg,#ffffff12 0 24px,transparent 24px 48px)}
+body[data-child-theme=minecraft] .total{background:linear-gradient(120deg,#f7ffe7,#e5f5cb);border-color:#cbe4b6}
+body[data-child-theme=minecraft] .nav button.active,body[data-child-theme=minecraft] #childSelector .section-btn.active{background:#e1f2dd;color:#2d713c;border-color:#acd3a5}
+body[data-child-theme=minecraft] .stat{background:#f0f8ed;border-color:#e1efdd}
+body[data-child-theme=minecraft] .stat b,body[data-child-theme=minecraft] .total .value{color:#347a42}
+body[data-child-theme=minecraft] .avatar{outline-color:#b2dc7b}
+
+/* Family MiniBank — illustrated kid-friendly pages */
+body{background:#f2f8ff}
+body[data-child-theme=kitty]{background:#fff4f9}
+body[data-child-theme=minecraft]{background:#eef8f1}
+.app{max-width:1080px}
+.topbar strong:before{content:'🐤';margin-right:9px}
+.hero{min-height:142px}
+.hero h1{font-size:clamp(1.75rem,5vw,2.35rem)}
+body[data-child-theme=kitty] .hero{background:linear-gradient(105deg,#e783b5,#ffbdd4)}
+body[data-child-theme=minecraft] .hero{background:linear-gradient(105deg,#197347,#389a74)}
+.card{box-shadow:0 7px 20px #214e8010}
+.tree-card{background:#fff;border:1px solid #e5edf5;border-radius:24px;margin:16px 0 19px;padding:22px 20px 15px;overflow:hidden;box-shadow:0 8px 28px #23476e0c}
+.tree-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tree-eyebrow{color:#91a0b3;font-size:.66rem;font-weight:850;letter-spacing:.13em}
+.tree-title h2{font-size:clamp(1.05rem,3vw,1.35rem);margin:5px 0 5px;letter-spacing:-.03em}
+.tree-title p{color:#73849b;margin:0;font-size:.81rem}
+.tree-rate{flex-shrink:0;border:1px solid #e5ebf5;border-radius:14px;background:#f8fbff;padding:9px 11px;color:#647d98;font-size:.76rem}
+.tree-landscape{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:end;position:relative;margin-top:24px;padding:10px 0 7px;background:linear-gradient(180deg,transparent 76%,#f2f8e9 76%,#e4f2d5 89%,transparent 89%);border-radius:13px}
+.tree-landscape:before{content:'';position:absolute;left:10%;right:10%;top:39%;border-top:2px dashed #c9dfd1;z-index:0}
+.tree-stage{display:flex;flex-direction:column;align-items:center;justify-content:end;gap:5px;position:relative;z-index:1;min-width:0;animation:treeRise .65s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--stage)*.22s)}
+.tree-money{font-size:clamp(.66rem,2.3vw,.91rem);font-weight:900;color:#0d9464;background:#e1f8e8;padding:8px 6px;border-radius:10px;white-space:nowrap;max-width:100%;font-variant-numeric:tabular-nums}
+.tree-stage:nth-child(2) .tree-money{background:#e8f3ff;color:#247ac7}
+.tree-stage:nth-child(3) .tree-money{background:#e9e9ff;color:#6563c6}
+.tree-stage:nth-child(4) .tree-money{background:#0baf80;color:white}
+.tree-art{width:100%;height:clamp(100px,20vw,190px);display:flex;align-items:end;justify-content:center}
+.tree-art svg{width:100%;max-height:100%;height:100%;overflow:visible;transform-origin:center bottom;animation:treeSway 4s ease-in-out infinite;animation-delay:calc(var(--stage)*.4s)}
+.tree-stage:nth-child(1) .tree-art svg{width:54%;height:60%}
+.tree-stage:nth-child(2) .tree-art svg{width:76%;height:78%}
+.tree-stage:nth-child(3) .tree-art svg{width:92%;height:93%}
+.tree-stage strong{font-size:clamp(.77rem,2.5vw,.97rem);color:#203c61}
+.tree-stage small{font-size:.73rem;color:#8796a9}
+.tree-foot{text-align:center;font-size:.7rem;color:#91a0b2;margin-top:13px}
+body[data-child-theme=kitty] .tree-card{background:linear-gradient(#fff,#fff9fd);border-color:#f9dce9}
+body[data-child-theme=kitty] .tree-landscape{background:linear-gradient(180deg,transparent 76%,#fff0f7 76%,#ffe4f0 89%,transparent 89%)}
+body[data-child-theme=kitty] .tree-stage:nth-child(4) .tree-money{background:#ee64a6}
+body[data-child-theme=kitty] .tree-stage:nth-child(1) .tree-money{background:#ffe3f0;color:#bd4c83}
+body[data-child-theme=kitty] .tree-title h2{color:#a83f79}
+body[data-child-theme=minecraft] .tree-title h2{color:#276a40}
+@keyframes treeRise{from{opacity:0;transform:translateY(25px) scale(.93)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes treeSway{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
+@media(max-width:450px){.tree-card{padding:15px 9px 12px;border-radius:19px}.tree-title{padding:0 6px}.tree-rate{font-size:.68rem;padding:7px}.tree-landscape{gap:2px;margin-top:18px}.tree-money{font-size:.62rem;padding:7px 3px}.tree-stage strong{font-size:.76rem}.tree-stage small{font-size:.65rem}.tree-art{height:118px}.tree-foot{font-size:.64rem}}
+@media(prefers-reduced-motion:reduce){.tree-stage,.tree-art svg{animation:none!important}}
+.loading-screen{min-height:85vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;text-align:center}.loading-logo{font-size:3.4rem;animation:loadFloat 1.6s ease-in-out infinite}.loading-title{font-size:2.2rem;font-weight:900;letter-spacing:-.05em;color:#0e3261}.loading-subtitle{color:#7b8ca4;font-size:.92rem}.loading-track{height:5px;width:160px;border-radius:20px;background:#e0eaf5;overflow:hidden;margin-top:12px}.loading-track span{display:block;height:100%;width:40%;background:#1681dc;border-radius:20px;animation:loadBar 1.3s ease-in-out infinite}.movement-details{background:white;border:1px solid #e6edf5;border-radius:20px;margin:16px 0;box-shadow:0 6px 23px #173f6e0a;overflow:hidden}.movement-details summary{cursor:pointer;list-style:none;padding:20px;font-weight:850;display:flex;justify-content:space-between;gap:10px;align-items:center;color:#203d60}.movement-details summary::-webkit-details-marker{display:none}.movement-details summary span{color:#297bd1;font-weight:700;font-size:.78rem}.movement-details summary span:after{content:'⌄';margin-left:7px;font-size:1.1rem}.movement-details[open] summary span:after{content:'⌃'}.movement-content{padding:0 20px 18px}.tree-card{margin-top:16px}@keyframes loadFloat{50%{transform:translateY(-9px)}}@keyframes loadBar{0%{transform:translateX(-110%)}100%{transform:translateX(370%)}}@media(prefers-reduced-motion:reduce){.loading-logo,.loading-track span{animation:none}}
+.character-scene{position:relative;display:flex;align-items:center;min-height:178px;overflow:hidden;border-radius:24px;margin:16px 0;background:linear-gradient(125deg,#0c643d,#45ac75);box-shadow:0 12px 27px #124b3d22;isolation:isolate}
+.character-scene:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff0c 1px,transparent 1px),linear-gradient(90deg,#ffffff0c 1px,transparent 1px);background-size:25px 25px;animation:scenePan 12s linear infinite}
+.character-scene:after{content:"";position:absolute;inset:auto 0 0;height:21px;background:repeating-linear-gradient(90deg,#468b3b 0 23px,#377b31 23px 46px);opacity:.8}
+.scene-glow{position:absolute;width:190px;height:190px;border-radius:50%;background:#b7ff9c55;filter:blur(25px);left:2%;top:-15%;animation:scenePulse 4s ease-in-out infinite}
+.character-figure{position:relative;z-index:2;width:32%;max-width:155px;height:175px;object-fit:contain;object-position:bottom;align-self:flex-end;margin-left:8px;filter:drop-shadow(0 10px 10px #0003);animation:characterFloat 2.7s ease-in-out infinite}
+.scene-copy{position:relative;z-index:2;display:flex;flex-direction:column;gap:8px;padding:15px 18px;color:white;flex:1}
+.scene-tag{font-size:.66rem;font-weight:900;letter-spacing:.14em;opacity:.8}
+.scene-copy strong{font-size:clamp(1.06rem,4.5vw,1.5rem);line-height:1.22;letter-spacing:-.03em}
+.scene-copy small{font-size:.78rem;opacity:.84}
+.scene-spark{position:absolute;z-index:3;color:#ffef96;font-size:1.3rem;animation:sparkle 2s ease-in-out infinite}.s1{left:27%;top:16%}.s2{right:10%;top:13%;animation-delay:.8s}.s3{right:32%;bottom:13%;animation-delay:1.4s}
+body[data-child-theme=kitty] .character-scene{background:linear-gradient(125deg,#f29cc6,#ee73a7)}
+body[data-child-theme=kitty] .character-scene:before{background-image:radial-gradient(circle,#ffffff48 2px,transparent 3px);background-size:24px 24px}
+body[data-child-theme=kitty] .character-scene:after{background:repeating-linear-gradient(90deg,#ffe0ee 0 23px,#ffd1e5 23px 46px);height:12px}
+body[data-child-theme=kitty] .scene-glow{background:#fff6e9aa}
+body[data-child-theme=kitty] .scene-spark{color:#fff9f9}
+body[data-child-theme=kitty] .character-figure{width:37%;max-width:170px}
+.tree-art svg{animation:treeGrowIn .95s cubic-bezier(.18,.85,.2,1) both,treeSway 3.5s ease-in-out 1s infinite!important;animation-delay:calc(var(--stage)*.3s),calc(1s + var(--stage)*.3s)!important}
+.tree-money{animation:moneyPop .7s ease both;animation-delay:calc(.3s + var(--stage)*.3s)}
+@keyframes characterFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+@keyframes sparkle{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1.35)}}
+@keyframes scenePulse{50%{transform:scale(1.2);opacity:.7}}
+@keyframes scenePan{to{background-position:50px 25px}}
+@keyframes treeGrowIn{from{opacity:0;transform:scale(.3) translateY(45px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes moneyPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@media(max-width:430px){.character-scene{min-height:153px}.character-figure{height:152px}.scene-copy{padding:10px 11px}.scene-copy strong{font-size:1.03rem}}
+@media(prefers-reduced-motion:reduce){.character-scene:before,.scene-glow,.character-figure,.scene-spark,.tree-art svg,.tree-money{animation:none!important}}
+
+/* Illustration-rich, compact child dashboard */
+.hero{position:relative;overflow:hidden;isolation:isolate;min-height:158px;padding:20px;box-shadow:0 10px 25px #154d6a25}
+.hero>*:not(.hero-art){position:relative;z-index:2}
+.hero-art{position:absolute;inset:0;z-index:0;pointer-events:none}
+body[data-child-theme=minecraft] .hero{background:linear-gradient(90deg,#126a45 0%,#2e9a62 58%,#3cb58b 100%)}
+body[data-child-theme=minecraft] .hero-art{background:linear-gradient(90deg,#145b42e8 0%,#17754877 52%,#105b3909 100%),linear-gradient(0deg,#24793c 0 17%,transparent 17%),repeating-linear-gradient(90deg,transparent 0 33px,#ffffff08 33px 36px),url('https://skinrender.dev/render/mob/creeper/body') right 4% bottom / auto 94% no-repeat}
+body[data-child-theme=kitty] .hero{background:linear-gradient(90deg,#df73a8,#ffb7d8)}
+body[data-child-theme=kitty] .hero-art{background:linear-gradient(90deg,#d76aa7d8 0%,#f38eb573 55%,#ffc3df16 100%),radial-gradient(circle at 65% 25%,#fff8 0 5px,transparent 6px),radial-gradient(circle at 78% 48%,#fff7 0 7px,transparent 8px),url('https://www.citypng.com/public/uploads/preview/playful-hello-kitty-sanrio-character-transparent-png-735811696612238lf1dxf8yjy.png') right 3% bottom / auto 94% no-repeat}
+.hero-art:after{content:'✦   ✧    ✦';position:absolute;right:24%;top:13%;color:#fffa;letter-spacing:15px;animation:heroSpark 3s ease-in-out infinite}
+.hero h1,.hero p{max-width:60%;text-shadow:0 1px 7px #0002}
+.hero .avatar{width:78px;height:78px;box-shadow:0 5px 15px #0002}
+.tree-card{padding:17px 8px 9px;border-radius:22px;background:linear-gradient(180deg,#fff,#f7fff7)}
+.tree-title{padding:0 10px 5px}
+.tree-title h2{font-size:1.12rem;color:#19603e}
+.tree-landscape{margin-top:3px;gap:1px;padding:7px 0 6px;background:linear-gradient(180deg,#f8fdff 0%,#effaf0 68%,#c4e9b4 83%,#fff 83%);align-items:end}
+.tree-landscape:before{display:none}
+.tree-stage{gap:3px}
+.tree-art{height:clamp(110px,25vw,210px)}
+.tree-stage:nth-child(1) .tree-art svg{width:76%;height:72%}
+.tree-stage:nth-child(2) .tree-art svg{width:98%;height:90%}
+.tree-stage:nth-child(3) .tree-art svg{width:105%;height:100%}
+.tree-stage:nth-child(4) .tree-art svg{width:112%;height:100%}
+.tree-stage strong{font-size:clamp(.72rem,2.5vw,.93rem);background:#ffffffd9;padding:5px 2px;border-radius:8px;width:100%;text-align:center}
+.tree-money{font-size:clamp(.64rem,2.2vw,.9rem);background:#e6f8e6!important;color:#166b4c!important;border-radius:8px;padding:7px 2px;width:100%;text-align:center;white-space:nowrap}
+body[data-child-theme=kitty] .tree-card{background:linear-gradient(#fff,#fff6fb)}
+body[data-child-theme=kitty] .tree-landscape{background:linear-gradient(180deg,#fff9fd 0%,#ffe9f4 68%,#f7c3dc 83%,#fff 83%)}
+body[data-child-theme=kitty] .tree-money{background:#ffe3f1!important;color:#c04c89!important}
+body[data-child-theme=kitty] .tree-title h2{color:#ba4a83}
+.tree-art svg{filter:drop-shadow(0 5px 3px #0002)}
+@keyframes heroSpark{50%{opacity:.3;transform:translateY(-7px)}}
+@media(max-width:430px){.hero{min-height:145px}.hero h1{font-size:1.55rem}.hero p{font-size:.84rem}.hero .avatar{width:64px;height:64px}.tree-art{height:115px}.tree-stage strong{font-size:.7rem}.tree-money{font-size:.59rem}}
+
+/* Gold factory splash screen */
+.loading-screen{min-height:90vh;background:radial-gradient(circle at 50% 32%,#e5f4ff 0%,#f8fbff 56%,#fff5e3 100%);border-radius:26px;padding:28px 12px;gap:15px}
+.loading-screen .loading-title{font-size:2.3rem;color:#12315d}
+.loading-headline{font-size:1.3rem;font-weight:900;color:#132c54}
+.loading-machine{width:min(310px,85vw);height:285px;position:relative;margin:12px auto 5px;filter:drop-shadow(0 14px 15px #9b7b4833)}
+.factory-body{position:absolute;left:33px;top:95px;width:215px;height:152px;border-radius:22px 24px 16px 16px;background:linear-gradient(130deg,#dbe4f2,#7186a7 35%,#3d5375 75%,#273f64);border:7px solid #d6a84a;box-shadow:inset -11px -12px 0 #152d5144,0 8px 0 #a78038}
+.factory-chimney{position:absolute;left:67px;top:42px;width:52px;height:87px;border-radius:13px 13px 5px 5px;background:linear-gradient(90deg,#657b9b,#e5c47b,#657b9b);border:5px solid #b99449}
+.factory-wheel{position:absolute;left:48px;top:32px;width:87px;height:87px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 34% 25%,#fff6a4,#ffd24d 42%,#e8a321 78%);border:9px solid #f4d17b;color:#9a6113;font-size:3rem;font-weight:900;box-shadow:0 0 0 7px #415775,0 0 25px #ffd25e66;animation:factoryTurn 4s ease-in-out infinite}
+.factory-lamp{position:absolute;top:12px;right:15px;width:16px;height:16px;border-radius:50%;background:#55f7c7;box-shadow:0 0 15px #55f7c7;animation:factoryFlash 1.2s infinite}
+.factory-slot{position:absolute;left:44px;bottom:-7px;width:121px;height:22px;border:5px solid #253852;background:#14243d;border-radius:8px}
+.factory-belt{position:absolute;left:119px;bottom:-31px;width:155px;height:42px;transform:skewX(-12deg);border:5px solid #4a6080;border-radius:8px;background:repeating-linear-gradient(90deg,#314763 0 15px,#66809e 15px 23px);overflow:hidden}
+.factory-ingot{position:absolute;bottom:8px;left:-42px;width:49px;height:23px;clip-path:polygon(18% 0,82% 0,100% 100%,0 100%);background:linear-gradient(#fff7a4 0 17%,#ffd23e 20%,#de9717 100%);border-radius:4px;animation:factoryIngot 3s linear infinite}
+.factory-ingot:nth-child(2){animation-delay:1s}.factory-ingot:nth-child(3){animation-delay:2s}
+.factory-coins span{position:absolute;top:8px;left:100px;z-index:2;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#fff5a4,#f2ac1b);border:3px solid #df9918;color:#986013;font-weight:900;animation:factoryCoin 2.6s ease-in infinite}
+.factory-coins span:nth-child(2){animation-delay:.85s}.factory-coins span:nth-child(3){animation-delay:1.7s}
+.factory-stack{position:absolute;right:5px;bottom:17px;width:70px;height:50px}
+.factory-stack i{position:absolute;bottom:0;width:44px;height:25px;background:linear-gradient(#fff4a2,#f2b82e 45%,#c78a18);clip-path:polygon(17% 0,83% 0,100% 100%,0 100%);animation:factoryFlash 2.5s infinite}
+.factory-stack i:nth-child(2){left:24px;bottom:0;animation-delay:.6s}.factory-stack i:nth-child(3){left:12px;bottom:22px;animation-delay:1.2s}
+.factory-spark{position:absolute;top:62px;right:28px;font-size:35px;color:#efbd41;animation:factoryFlash 1.3s infinite}
+@keyframes factoryCoin{0%{transform:translateY(-25px) rotateY(0);opacity:0}20%{opacity:1}70%{transform:translateY(95px) rotateY(270deg);opacity:1}90%,100%{transform:translateY(110px) rotateY(360deg);opacity:0}}
+@keyframes factoryIngot{0%{left:-55px}100%{left:155px}}
+@keyframes factoryTurn{50%{transform:rotate(18deg)}}
+@keyframes factoryFlash{50%{opacity:.4;filter:brightness(1.4)}}
+/* Fix double-background character banners: one seamless themed surface */
+body[data-child-theme=kitty] .hero{background:linear-gradient(105deg,#d865a2 0%,#ed8fb9 58%,#ffc5de 100%)!important}
+body[data-child-theme=kitty] .hero-art{background:radial-gradient(ellipse at 84% 83%,#fff9 0 17%,transparent 18%),radial-gradient(ellipse at 74% 74%,#fff8 0 13%,transparent 14%),radial-gradient(circle at 76% 27%,#fff5 0 10px,transparent 11px),linear-gradient(105deg,transparent 0 54%,#ffd6e640 100%)!important}
+body[data-child-theme=kitty] .hero:after{content:"";position:absolute;z-index:1;right:5%;bottom:0;width:33%;height:94%;background:url('https://www.citypng.com/public/uploads/preview/playful-hello-kitty-sanrio-character-transparent-png-735811696612238lf1dxf8yjy.png') center bottom / contain no-repeat;mix-blend-mode:multiply;pointer-events:none}
+body[data-child-theme=kitty] .hero h1,body[data-child-theme=kitty] .hero p{max-width:none}
+body[data-child-theme=kitty] .hero>div:last-child{max-width:55%}
+body[data-child-theme=minecraft] .hero>div:last-child{max-width:55%}
+body[data-child-theme=minecraft] .hero-art{background:linear-gradient(90deg,#145b42e8 0%,#17754877 52%,#105b3909 100%),linear-gradient(0deg,#24793c 0 17%,transparent 17%),repeating-linear-gradient(90deg,transparent 0 33px,#ffffff08 33px 36px),url('https://skinrender.dev/render/mob/creeper/body') right 4% bottom / auto 94% no-repeat}
+@media(max-width:450px){body[data-child-theme=kitty] .hero:after{right:1%;width:34%;height:85%}body[data-child-theme=kitty] .hero>div:last-child,body[data-child-theme=minecraft] .hero>div:last-child{max-width:54%}.hero p{line-height:1.35}}
+@media(prefers-reduced-motion:reduce){.factory-coins span,.factory-wheel,.factory-lamp,.factory-ingot,.factory-stack i,.factory-spark{animation:none}}
+
+/* Operations use the existing MiniBank cards and child themes. */
+.mb-label{display:block;font-size:.84rem;font-weight:750;color:var(--navy);margin:12px 0}
+.mb-label input,.mb-label select{display:block;width:100%;min-width:0;box-sizing:border-box;margin-top:7px;padding:12px;border:1px solid #d6e0ed;border-radius:12px;background:white;color:var(--navy);font:inherit;font-weight:500}
+.mb-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mb-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.mb-delete{margin-top:12px;color:#b03848;border-color:#edc8cf}
+.feature details{margin-top:16px}.feature summary{cursor:pointer;font-weight:750;font-size:.85rem}
+.operation-error{background:#fff0f0;color:#9b303d;border:1px solid #efcad0}
+.chart-period{max-width:240px}.primary:disabled{opacity:.55;cursor:wait}
+.mb-label input:focus-visible,.mb-label select:focus-visible,.alloc input:focus-visible{outline:3px solid #97bfe9;outline-offset:2px}
+@media(max-width:700px){.mb-admin-grid{grid-template-columns:1fr}.mb-fields{gap:7px}.mb-label{font-size:.78rem}.mb-label input,.mb-label select{padding:10px 7px}}
+
+
+body:not(.admin-screen) .admin-toolbar{display:none}
+.admin-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0}.admin-toolbar h1{margin:0;font-size:1.65rem}.admin-toolbar p{margin:7px 0}.admin-toolbar button{margin:3px}
+.admin-screen .photo-controls,.admin-screen #mainNav,.admin-screen #childView>.hero,.admin-screen #childView>.total,.admin-screen #childView>.grid3,.admin-screen #pendingList{display:none!important}
+#adminGate label{font-weight:750;font-size:.9rem}#adminGateBack{display:block}#adminGateStatus{margin-top:16px}
+</style>
+</head>
+<body>
+<main class="app">
+<section id="loginView" class="login"><h2>MiniBank</h2><p class="muted">Ingresá con tu email autorizado.</p><input id="email" type="email" placeholder="tu@email.com" autocomplete="email"><input id="password" type="password" placeholder="Contraseña" autocomplete="current-password"><button id="sendLink" class="primary">Ingresar</button><div id="loginStatus" class="status hidden"></div></section>
+<section id="adminGate" class="login hidden" aria-labelledby="adminGateTitle"><h2 id="adminGateTitle">🔐 Administración</h2><p class="muted">Ingresá la contraseña para abrir la administración de MiniBank.</p><form id="adminGateForm"><label for="adminGatePassword">Contraseña de Administración</label><input id="adminGatePassword" type="password" autocomplete="current-password" maxlength="128" required><button id="adminGateSubmit" type="submit" class="primary">Entrar a Administración</button></form><div id="adminGateStatus" class="status hidden" role="status" aria-live="polite"></div><button id="adminGateBack" type="button" class="linkbtn" style="margin-top:18px">← Volver a las cuentas</button></section><section id="loadingView" class="loading-screen hidden" role="status" aria-live="polite"><div class="loading-title">MiniBank</div><div class="loading-machine" aria-hidden="true"><div class="factory-coins"><span>＄</span><span>＄</span><span>＄</span></div><div class="factory-chimney"></div><div class="factory-body"><div class="factory-lamp"></div><div class="factory-wheel">＄</div><div class="factory-slot"></div><div class="factory-belt"><span class="factory-ingot"></span><span class="factory-ingot"></span><span class="factory-ingot"></span></div></div><div class="factory-stack"><i></i><i></i><i></i></div><div class="factory-spark">✦</div></div><div class="loading-headline">Fabricando tu fortuna…</div><div class="loading-subtitle">Cargando tus ahorros</div><div class="loading-track"><span></span></div></section><section id="appView" class="hidden"><div class="topbar"><strong>MiniBank</strong><button id="logout" class="linkbtn">Cerrar sesión</button></div><div id="adminToolbar" class="admin-toolbar"><div><h1>Administración</h1><p class="muted">Elegí la cuenta que querés administrar.</p></div><div><button id="backToAccounts" type="button" class="photo-button">← Volver a las cuentas</button><button id="lockAdministration" type="button" class="photo-button">🔒 Bloquear administración</button></div></div><div id="childSelector" class="sections"></div><div class="photo-controls"><button id="changePhoto" type="button" class="photo-button">📷 Cambiar foto</button><span>Se guarda de forma privada en Supabase</span><input id="photoInput" type="file" accept="image/*" class="hidden" aria-label="Elegir foto del niño"></div><nav class="nav" id="mainNav" aria-label="Secciones de MiniBank"><button type="button" data-v="grow">🌱 Crecer</button><button type="button" data-v="spend">🛍️ Disfrutar</button><button type="button" data-v="share">❤️ Compartir</button><button type="button" data-v="admin">⚙️ Papá</button></nav><div id="dataStatus" class="status hidden" role="status" aria-live="polite"></div><div id="operationStatus" class="status hidden" role="status" aria-live="polite"></div><button id="retryData" class="linkbtn" style="margin:8px 0">Actualizar datos</button><section id="childView"><div class="hero"><div class="hero-art" aria-hidden="true"></div><div class="avatar" id="avatar">👧</div><div><h1 id="hello">Hola</h1><p>¡Qué bueno verte hoy! Tu dinero tiene tres trabajos.</p></div></div><div class="total"><div class="muted">Todo tu dinero</div><div class="value" id="totalMoney">USD 0.00</div><div class="muted">Crecer + Disfrutar + Compartir</div></div><div class="grid3"><div class="card"><div class="bucket-title">🌱 Crecer</div><div id="growBalance" class="bucket-value" style="color:var(--green)">USD 0.00</div><div class="muted">Para el futuro</div></div><div class="card"><div class="bucket-title">🛍️ Disfrutar</div><div id="spendBalance" class="bucket-value" style="color:var(--blue)">USD 0.00</div><div class="muted">Para usar ahora</div></div><div class="card"><div class="bucket-title">❤️ Compartir</div><div id="shareBalance" class="bucket-value" style="color:var(--pink)">USD 0.00</div><div class="muted">Para ayudar</div></div></div><div id="pendingList"></div><section id="growPanel" class="panel hidden"><div id="growMore"></div><div class="chart-wrap"><strong>📈 Evolución de Crecer</strong><p class="muted">Últimos 12 meses · Valores en USD</p><div class="chart-legend"><span><i class="legend-blue"></i>Saldo con intereses</span><span><i class="legend-gray"></i>Capital aportado</span></div><canvas id="growthChart"></canvas></div></section><section id="spendPanel" class="panel hidden"><div id="spendMore"></div></section><section id="sharePanel" class="panel hidden"><div id="shareMore"></div></section><section id="adminPanel" class="panel hidden"><div id="adminMore"></div></section></section></section>
+</main>
+<script>
+(()=>{const cfg=window.MINIBANK_CONFIG||{};if(!cfg.supabaseUrl||!cfg.supabaseAnonKey){document.body.innerHTML='<main class="app"><div class="status">Falta configurar config.js con Supabase URL y anon key.</div></main>';return}const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);const administrationPage=location.pathname.endsWith('/admin.html');if(administrationPage)document.body.classList.add('admin-screen');let currentChild=null,children=[],transactions=[];const $=id=>document.getElementById(id);const money=n=>`USD ${Number(n||0).toFixed(2)}`;async function signIn(){
+const email=$('email').value.trim(),password=$('password').value;if(!email||!password){$('loginStatus').classList.remove('hidden');$('loginStatus').textContent='Ingresá tu email y contraseña de MiniBank.';return;}
+const button=$('sendLink');button.disabled=true;try{const{error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;await openSession();}catch(error){hideLoading();$('loginView').classList.remove('hidden');$('loginStatus').classList.remove('hidden');$('loginStatus').textContent=error.message||'No se pudo ingresar.';}finally{button.disabled=false;}}
+async function signOut(){await sb.rpc('minibank_admin_lock');await sb.auth.signOut();location.reload();}
+function childTheme(c){return String(c?.name||'').toLowerCase().includes('luna')?'kitty':'minecraft'}
+let avatarRequest=0,avatarObjectUrl=null;
+function photoPath(c){const name=String(c?.name||'').toLowerCase();return name.includes('mateo')?'child_1.jpeg':name.includes('luna')?'child_2.jpeg':null}
+function setAvatarImage(url){const avatar=$('avatar');avatar.replaceChildren();const img=document.createElement('img');img.src=url;img.alt='Foto de '+currentChild.name.split(' ')[0];avatar.appendChild(img)}
+async function applyChildLook(){if(!currentChild)return;const child=currentChild,request=++avatarRequest,theme=childTheme(child);document.body.dataset.childTheme=theme;if(avatarObjectUrl){URL.revokeObjectURL(avatarObjectUrl);avatarObjectUrl=null}const avatar=$('avatar');avatar.replaceChildren();avatar.textContent=theme==='kitty'?'🎀':'⛏️';const chart=$('growthChart');if(chart)chart.setAttribute('aria-label','Evolución del ahorro de '+child.name);const path=photoPath(child);if(path){try{const{data,error}=await sb.storage.from('profiles').download(path);if(error)throw error;if(request!==avatarRequest)return;avatarObjectUrl=URL.createObjectURL(data);setAvatarImage(avatarObjectUrl);return}catch(err){console.info('Foto privada no disponible:',err.message)}}if(request!==avatarRequest)return;const stored=localStorage.getItem('minibank-photo-'+child.id);if(stored)setAvatarImage(stored)}
+$('changePhoto').addEventListener('click',()=>{if(currentChild)$('photoInput').click()});
+$('photoInput').addEventListener('change',async e=>{const file=e.target.files?.[0],child=currentChild;if(!file||!child)return;if(!file.type.startsWith('image/')){alert('Elegí una imagen.');return}const button=$('changePhoto');button.disabled=true;button.textContent='Guardando foto…';try{const img=await createImageBitmap(file);const scale=Math.min(1,500/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const blob=await new Promise((resolve,reject)=>canvas.toBlob(x=>x?resolve(x):reject(new Error('No se pudo procesar la imagen')),'image/jpeg',.85));const path=photoPath(child);if(!path)throw new Error('No se encontró el perfil');const{error}=await sb.storage.from('profiles').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'60'});if(error)throw error;localStorage.removeItem('minibank-photo-'+child.id);if(currentChild?.id===child.id)await applyChildLook();alert('Foto guardada en Supabase. Ya se verá en tus otros dispositivos.')}catch(err){alert('No se pudo guardar en Supabase: '+err.message+'\nVerificá que el bucket privado profiles y sus permisos estén configurados.')}finally{button.disabled=false;button.textContent='📷 Cambiar foto';e.target.value=''}});
+function renderChildSelector(){const wrap=$('childSelector');wrap.innerHTML='';children.forEach(c=>{const b=document.createElement('button');b.className='section-btn';b.textContent=c.name.split(' ')[0];b.addEventListener('click',()=>selectChild(c.id));wrap.appendChild(b)})}function signedAmount(tx){return ['Retiro','Gasto','Donación'].includes(tx.type)?-Number(tx.amount):Number(tx.amount)}function balancesFor(tx){const b={grow:0,spend:0,share:0};tx.forEach(t=>b[t.bucket||'grow']+=signedAmount(t));return b}
+let currentBalances=null,activeRules=[];
+const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function capitalizedGrow(child,tx){return historyFor(child,tx).at(-1)?.balance||0;}
+function historyFor(child,tx){const start=Date.parse(String(child.opening_date).slice(0,10)+'T00:00:00Z'),end=todayMs(),rate=Math.pow(1+Number(child.annual_rate||0),1/365)-1;const days=new Map();tx.filter(t=>(t.bucket||'grow')==='grow').forEach(t=>{const d=Date.parse(String(t.date).slice(0,10)+'T00:00:00Z');days.set(d,(days.get(d)||0)+signedAmount(t))});let balance=0,principal=0,interest=0,last=0;const rows=[];if(!Number.isFinite(start))return rows;for(let d=start;d<=Math.max(start,end);d+=86400000){last=d===start?0:balance*rate;balance+=last;interest+=last;const v=days.get(d)||0;principal+=v;balance+=v;rows.push({date:d,balance,principal,interest,today:last})}return rows}
+function projection(child,grow,monthly,extra=0){const birth=new Date(String(child.birth_date).slice(0,10)+'T00:00:00Z');if(!Number.isFinite(birth.getTime()))return grow;birth.setUTCFullYear(birth.getUTCFullYear()+18);const today=todayMs();let v=grow;const daily=Math.pow(1+Number(child.annual_rate||0),1/365)-1;for(let d=today+86400000;d<=birth.getTime();d+=86400000){v*=1+daily;if(new Date(d).getUTCDate()===1)v+=monthly+extra}return v}
+function txRows(bucket){const list=transactions.filter(t=>(t.bucket||'grow')===bucket).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,10);return list.length?list.map(t=>'<div class="tx"><div><b>'+safe(t.concept||t.type)+'</b><small>'+safe(t.date)+' · '+safe(t.type)+'</small></div><b>'+money(signedAmount(t))+'</b></div>').join(''):'<p class="muted">Todavía no hay movimientos.</p>'}
+
+function ageToday(child){const birth=new Date(String(child.birth_date).slice(0,10)+'T00:00:00Z');const now=new Date(todayMs());if(!Number.isFinite(birth.getTime()))return 0;let age=now.getUTCFullYear()-birth.getUTCFullYear();if(now.getUTCMonth()<birth.getUTCMonth()||(now.getUTCMonth()===birth.getUTCMonth()&&now.getUTCDate()<birth.getUTCDate()))age--;return Math.max(0,age)}
+function projectionAtAge(child,current,monthly,targetAge){const birth=new Date(String(child.birth_date).slice(0,10)+'T00:00:00Z');if(!Number.isFinite(birth.getTime()))return current;const birthYear=birth.getUTCFullYear();birth.setUTCFullYear(birthYear+Math.floor(targetAge));birth.setTime(birth.getTime()+Math.round((targetAge%1)*365.2425*86400000));const today=todayMs(),daily=Math.pow(1+Number(child.annual_rate||0),1/365)-1;let balance=current;for(let d=today+86400000;d<=birth.getTime();d+=86400000){balance*=1+daily;if(new Date(d).getUTCDate()===1)balance+=monthly}return balance}
+function growthIllustration(stage,theme){
+const pink=theme==='kitty',leaf=pink?'#fa83b9':'#3a9d40',light=pink?'#ffd3e8':'#92cf62',dark=pink?'#d95399':'#1d6d38',wood=pink?'#ae6e81':'#936039';
+const svg=(v)=>'<svg viewBox="0 0 160 170" role="img" aria-label="Árbol ilustrado" xmlns="http://www.w3.org/2000/svg">'+v+'</svg>';
+const ground='<ellipse cx="80" cy="158" rx="67" ry="8" fill="'+(pink?'#f8bcd7':'#80b972')+'" opacity=".5"/><path d="M10 158 Q35 148 60 156 Q90 145 150 158" stroke="'+(pink?'#f5a9ca':'#6eac55')+'" stroke-width="4" fill="none"/>';
+if(stage===0)return svg(ground+'<path d="M79 150 Q77 129 79 106" stroke="#6c9d4e" stroke-width="6" fill="none"/><path d="M79 132 Q37 130 39 98 Q72 96 79 132" fill="'+light+'"/><path d="M79 121 Q84 89 119 94 Q116 125 79 121" fill="'+leaf+'"/><path d="M79 146 Q65 137 56 145 M81 145 Q98 136 111 145" stroke="#9d784c" stroke-width="3" fill="none"/><circle cx="79" cy="103" r="5" fill="'+(pink?'#fff':'#a8ed72')+'"/>');
+const trunk='<path d="M69 153 Q74 118 66 91 L89 91 Q85 124 95 153Z" fill="'+wood+'"/><path d="M77 144 Q79 120 76 99" stroke="#e2ac77" stroke-width="4" fill="none"/><path d="M80 116 L53 87 M83 106 L110 78" stroke="'+wood+'" stroke-width="10" stroke-linecap="round"/>';
+const clusters=stage===1?[[76,70,39],[49,91,27],[107,87,30]]:stage===2?[[80,56,47],[40,83,35],[117,78,38],[78,92,36]]:[[78,42,52],[34,72,40],[126,73,41],[76,87,47],[109,39,33]];
+const crowns=clusters.map(([x,y,r],i)=>pink?'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+[leaf,light,dark][i%3]+'"/><circle cx="'+(x-8)+'" cy="'+(y-9)+'" r="'+(r*.35)+'" fill="#ffe2ef" opacity=".8"/>':'<path d="M'+(x-r)+' '+(y-r*.55)+' h'+(r*.35)+' v-'+(r*.45)+' h'+(r*.55)+' v-'+(r*.25)+' h'+(r*.65)+' v'+(r*.32)+' h'+(r*.42)+' v'+(r*.58)+' h'+(r*.25)+' v'+(r*.7)+' h-'+(r*2.2)+'Z" fill="'+[leaf,light,dark][i%3]+'"/><rect x="'+(x-r*.3)+'" y="'+(y-r*.7)+'" width="'+(r*.36)+'" height="'+(r*.3)+'" fill="#b2e66e" opacity=".8"/>' ).join('');
+const ornaments=Array.from({length:stage===1?8:stage===2?15:22},(_,i)=>{const x=35+(i*37)%94,y=25+(i*23)%88;return pink?'<g transform="translate('+x+' '+y+')"><circle r="4" fill="#fff2f9"/><circle cx="-4" cy="-2" r="3" fill="#ffcae0"/><circle cx="4" cy="-2" r="3" fill="#ffcae0"/><circle cx="0" cy="3" r="3" fill="#fff"/><circle r="1.6" fill="#f5c34b"/></g>':'<rect x="'+x+'" y="'+y+'" width="5" height="5" fill="'+(i%3?'#b3e46a':'#f6d66b')+'"/>'}).join('');
+const house=stage>=2?'<g><path d="M63 108 L81 91 L100 108" fill="'+(pink?'#f49bbf':'#8b542f')+'" stroke="'+(pink?'#fff':'#e7b56c')+'" stroke-width="4"/><rect x="65" y="108" width="33" height="23" rx="2" fill="'+(pink?'#ffe5ee':'#e5b36b')+'"/><rect x="77" y="114" width="10" height="17" fill="'+(pink?'#e47bad':'#80502e')+'"/><rect x="67" y="113" width="7" height="8" fill="#fff6ac"/><path d="M61 132 L103 132" stroke="'+wood+'" stroke-width="5"/></g>':'';
+const extra=stage===3?'<path d="M101 131 Q118 141 110 151" stroke="'+(pink?'#f9b5d2':'#60b7e4')+'" stroke-width="7" fill="none"/><path d="M44 135 L44 116 L60 116 L60 135" fill="'+(pink?'#ffd2e6':'#a7cf65')+'"/><path d="M40 116 L52 105 L64 116" fill="'+(pink?'#ff9cc4':'#98633a')+'"/><circle cx="117" cy="149" r="5" fill="'+(pink?'#ff80b1':'#5db9ec')+'"/>':'';
+return svg(ground+trunk+crowns+ornaments+house+extra);
+}
+function renderTree(child,balance,monthly){const age=ageToday(child),step=(18-age)/3,ages=[age,age+step,age+2*step,18],theme=childTheme(child);const fmtAge=a=>Number.isInteger(a)?String(a):a.toFixed(1).replace('.',',');return '<section class="tree-card"><div class="tree-title"><div><h2>🌱 Tu árbol de crecimiento</h2></div></div><div class="tree-landscape">'+ages.map((ageValue,i)=>'<div class="tree-stage" style="--stage:'+i+'"><div class="tree-art">'+growthIllustration(i,theme)+'</div><strong>'+(i===0?'Hoy':i===3?'18 años':fmtAge(ageValue)+' años')+'</strong><span class="tree-money">'+money(i===0?balance:projectionAtAge(child,balance,monthly,ageValue))+'</span></div>').join('')+'</div></section>'}
+function renderFull(){if(!currentChild||!currentBalances)return;const b=currentBalances,h=historyFor(currentChild,transactions),last=h[h.length-1]||{principal:b.grow,interest:0,today:0};const rule=currentRule();const allowance=Number(rule?.amount??20),growPct=Number(rule?.grow_pct??60),spendPct=Number(rule?.spend_pct??30),sharePct=Number(rule?.share_pct??10);const growthTree=renderTree(currentChild,b.grow,allowance*growPct/100);const mascot=childTheme(currentChild)==='kitty'?'https://www.citypng.com/public/uploads/preview/playful-hello-kitty-sanrio-character-transparent-png-735811696612238lf1dxf8yjy.png':'https://skinrender.dev/render/mob/creeper/body';$('growMore').innerHTML='<div class="feature"><h3>🌱 Tu dinero está creciendo</h3><div class="stats"><div class="stat">Capital aportado<b>'+money(last.principal)+'</b></div><div class="stat">Intereses acumulados<b>'+money(last.interest)+'</b></div><div class="stat">Interés de hoy<b>'+money(last.today)+'</b></div><div class="stat">Tasa anual<b>'+(100*Number(currentChild.annual_rate||0)).toFixed(1)+'%</b></div></div></div><div class="feature allowance-card"><div class="allowance-head"><div><span class="eyebrow">MENSUALIDAD</span><h3>'+money(allowance)+' <small>/ mes</small></h3></div><span class="allowance-pill">Regla actual</span></div><div class="allowance-bar"><span style="width:'+growPct+'%;background:#1eaa7d"></span><span style="width:'+spendPct+'%;background:#1478df"></span><span style="width:'+sharePct+'%;background:#e16a92"></span></div><div class="allowance-legend"><span>🌱 '+money(allowance*growPct/100)+' <small>Crecer</small></span><span>🛍️ '+money(allowance*spendPct/100)+' <small>Disfrutar</small></span><span>❤️ '+money(allowance*sharePct/100)+' <small>Compartir</small></span></div></div>'+growthTree+'<details class="movement-details"><summary>🕘 Últimos movimientos <span>Ver movimientos</span></summary><div class="movement-content">'+txRows('grow')+'</div></details>';$('spendMore').innerHTML='<div class="feature"><h3>🛍️ Dinero para disfrutar</h3><div class="stat">Disponible<b>'+money(b.spend)+'</b></div><p class="muted">No genera intereses.</p><details class="movement-details"><summary>🕘 Últimos movimientos <span>Ver movimientos</span></summary><div class="movement-content">'+txRows('spend')+'</div></details></div>';$('shareMore').innerHTML='<div class="feature"><h3>❤️ Dinero para compartir</h3><div class="stat">Disponible<b>'+money(b.share)+'</b></div><details class="movement-details"><summary>🕘 Últimos movimientos <span>Ver movimientos</span></summary><div class="movement-content">'+txRows('share')+'</div></details></div>';$('adminMore').innerHTML='<div class="feature"><h3>🔐 Administración</h3><p class="muted">Consulta de perfil y mensualidad. Las escrituras siguen deshabilitadas hasta validar permisos y transacciones seguras.</p><div class="stat">Fecha de apertura<b>'+safe(currentChild.opening_date)+'</b></div><div class="stat">Fecha de nacimiento<b>'+safe(currentChild.birth_date)+'</b></div><div class="stat">Mensualidad actual<b>'+money(allowance)+'</b></div><div class="stat">Reparto actual<b>'+growPct+'% / '+spendPct+'% / '+sharePct+'%</b></div></div>'}
+
+document.querySelectorAll('#mainNav button').forEach(b=>b.addEventListener('click',()=>showPanel(b.dataset.v)));
+function drawChart(tx){const canvas=$('growthChart');if(!canvas||!currentChild)return;const ctx=canvas.getContext('2d'),w=Math.max(canvas.clientWidth||320,260),h=284,dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const hist=historyFor(currentChild,transactions);if(!hist.length){ctx.fillStyle='#71829a';ctx.fillText('Todavía no hay datos para graficar',20,35);return}const cutoffDate=new Date(todayMs());cutoffDate.setUTCMonth(cutoffDate.getUTCMonth()-chartMonths);const cutoff=chartMonths?cutoffDate.getTime():-Infinity;let pts=hist.filter(p=>p.date>=cutoff);if(pts.length<2)pts=hist;const plot={left:w<390?49:58,right:w-15,top:18,bottom:h-42};const max=Math.max(1,...pts.map(p=>Math.max(p.balance,p.principal)))*1.12;const minDate=pts[0].date,maxDate=Math.max(pts[pts.length-1].date,minDate+86400000);const X=d=>plot.left+(d-minDate)/(maxDate-minDate)*(plot.right-plot.left),Y=v=>plot.bottom-v/max*(plot.bottom-plot.top);ctx.font='11px system-ui, sans-serif';ctx.textBaseline='middle';for(let i=0;i<=4;i++){const v=max*i/4,y=Y(v);ctx.strokeStyle='#e6edf5';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(plot.left,y);ctx.lineTo(plot.right,y);ctx.stroke();ctx.fillStyle='#73849c';ctx.textAlign='right';ctx.fillText(v>=1000?(v/1000).toFixed(1)+'k':Math.round(v).toString(),plot.left-8,y)}ctx.textAlign='left';ctx.fillStyle='#73849c';ctx.fillText('USD',5,11);ctx.textAlign='center';const fmt=new Intl.DateTimeFormat('es-AR',{month:'short',year:'2-digit',timeZone:'UTC'});for(let i=0;i<=3;i++){const d=minDate+(maxDate-minDate)*i/3;ctx.fillText(fmt.format(new Date(d)),plot.left+(plot.right-plot.left)*i/3,h-21)}function line(key,color,width,dash=[]){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash(dash);pts.forEach((p,i)=>{const x=X(p.date),y=Y(p[key]);if(i===0)ctx.moveTo(x,y);else{ctx.lineTo(x,Y(pts[i-1][key]));ctx.lineTo(x,y)}});ctx.stroke();ctx.setLineDash([])}const fill=ctx.createLinearGradient(0,plot.top,0,plot.bottom);fill.addColorStop(0,'rgba(19,112,220,.17)');fill.addColorStop(1,'rgba(19,112,220,0)');ctx.beginPath();pts.forEach((p,i)=>{const x=X(p.date),y=Y(p.balance);if(i===0)ctx.moveTo(x,y);else{ctx.lineTo(x,Y(pts[i-1].balance));ctx.lineTo(x,y)}});ctx.lineTo(X(pts[pts.length-1].date),plot.bottom);ctx.lineTo(X(pts[0].date),plot.bottom);ctx.closePath();ctx.fillStyle=fill;ctx.fill();line('principal','#91a4bc',2,[5,5]);line('balance','#1478df',3);const last=pts[pts.length-1];ctx.beginPath();ctx.arc(X(last.date),Y(last.balance),4,0,Math.PI*2);ctx.fillStyle='#1478df';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}let snapshotCache=null,serverDate=null,activePanel=administrationPage?'admin':'grow',writeBusy=false,needsRefresh=false,loadEpoch=0,chartMonths=12;
+const todayIso=()=>serverDate||new Intl.DateTimeFormat('en-CA',{timeZone:'America/Guayaquil',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const todayMs=()=>Date.parse(todayIso()+'T00:00:00Z');
+function moneyCents(value){const s=String(value);if(!/^\d+(\.\d{1,2})?$/.test(s))throw Error('Ingresá un monto con hasta dos decimales.');const n=Math.round(Number(s)*100);if(!Number.isSafeInteger(n)||n>100000000000)throw Error('El monto es demasiado grande.');return n;}
+function currentRule(){return activeRules.filter(r=>String(r.effective_from)<=todayIso()).sort((a,b)=>String(b.effective_from).localeCompare(String(a.effective_from))||Number(b.id)-Number(a.id))[0]||{amount:0,grow_pct:60,spend_pct:30,share_pct:10};}
+function inform(message,error=false){const node=$('operationStatus');node.classList.remove('hidden');node.classList.toggle('operation-error',error);node.textContent=message;}
+function friendly(error){if(administrationPage&&error?.code==='42501'){showAdminGate(error.message);return error.message;}if(['42501','PGRST301'].includes(error?.code))return 'Tu sesión no tiene permiso o venció. Volvé a ingresar.';if(error?.code==='22007'||error?.code==='22008')return 'Revisá la fecha ingresada.';return error?.message||'No se pudo completar la operación. Actualizá los datos y volvé a intentar.';}
+async function loadChildren(preferredId=currentChild?.id||Number(new URLSearchParams(location.search).get('child'))){
+  const epoch=++loadEpoch;$('dataStatus').classList.remove('hidden');$('dataStatus').textContent='Actualizando cuentas…';
+  const {data,error}=await sb.rpc('minibank_web_bootstrap');if(error)throw error;if(epoch!==loadEpoch)return;
+  if(!data||!Array.isArray(data.children)||!Array.isArray(data.transactions))throw Error('No se recibió una respuesta válida de MiniBank.');
+  snapshotCache=data;serverDate=data.today;children=data.children;renderChildSelector();
+  const wanted=children.find(c=>c.id===preferredId)||children[0];
+  if(wanted){await selectChild(wanted.id,true);showPanel(activePanel);$('dataStatus').classList.add('hidden');writeBusy=false;needsRefresh=false;}
+  else{$('dataStatus').textContent='No hay cuentas disponibles para esta sesión.';}
+}
+async function selectChild(id,internal=false){
+  if(writeBusy&&!internal)return;
+  currentChild=children.find(c=>c.id===id);if(!currentChild||!snapshotCache)return;
+  const selectedId=currentChild.id;
+  transactions=snapshotCache.transactions.filter(t=>t.child_id===selectedId);
+  activeRules=snapshotCache.allowance_rules.filter(r=>r.child_id===selectedId);
+  currentBalances=balancesFor(transactions);currentBalances.grow=capitalizedGrow(currentChild,transactions);
+  // Keep the existing canvas outside growMore while its cards are rebuilt.
+  const retainedChart=$('growthChart')?.closest('.chart-wrap');
+  if(retainedChart)$('growPanel').appendChild(retainedChart);
+  renderFull();renderOperations();
+  const chartCard=$('growthChart')?.closest('.chart-wrap'),movementCard=$('growMore').querySelector('.movement-details');
+  if(chartCard&&movementCard)$('growMore').insertBefore(chartCard,movementCard);
+  $('hello').textContent=`Hola, ${currentChild.name.split(' ')[0]}`;
+  void applyChildLook();
+  for(const bucket of ['grow','spend','share'])$(bucket+'Balance').textContent=money(currentBalances[bucket]);
+  $('totalMoney').textContent=money(currentBalances.grow+currentBalances.spend+currentBalances.share);
+  [...$('childSelector').children].forEach((button,i)=>button.classList.toggle('active',children[i]?.id===selectedId));
+  renderPending(snapshotCache.pending_incomes.filter(p=>p.child_id===selectedId&&p.status==='pending'));
+  showPanel(activePanel);requestAnimationFrame(()=>drawChart());
+}
+async function perform(action,data,button){
+  if(writeBusy)return;
+  const payload=JSON.stringify(data),old=button._request;
+  const request=old?.payload===payload?old:{id:crypto.randomUUID(),payload};button._request=request;
+  writeBusy=true;button.disabled=true;const previous=button.textContent;button.textContent='Guardando…';let saved=false,reloaded=false;
+  try{
+    const result=await sb.rpc('minibank_web_action',{p_action:action,p_data:data,p_request_id:request.id});
+    if(result.error)throw result.error;saved=true;
+    await loadChildren(currentChild.id);reloaded=true;
+    inform('Listo. La operación quedó guardada en Supabase y los saldos están actualizados.');
+  }catch(error){
+    if(saved){writeBusy=true;needsRefresh=true;inform('La operación se guardó, pero no pudimos recargar los saldos. Pulsá Actualizar datos antes de hacer otra operación.',true);}
+    else inform(friendly(error)+' Si se cortó la conexión, reintentá este mismo botón para evitar duplicados.',true);
+  }finally{
+    if(!saved||reloaded)writeBusy=false;
+    button.disabled=writeBusy;button.textContent=previous;
+  }
+}
+function inputField(name,label,value='',type='text',attributes=''){return `<label class="mb-label">${label}<input name="${name}" type="${type}" value="${safe(value)}" ${attributes}></label>`;}
+function amountField(name,label,value=0){return inputField(name,label,value,'number','min="0" max="1000000000" step="0.01" required');}
+function selectField(name,label,options,value){return `<label class="mb-label">${label}<select name="${name}">${options.map(([v,t])=>`<option value="${safe(v)}" ${String(v)===String(value)?'selected':''}>${safe(t)}</option>`).join('')}</select></label>`;}
+function pctFields(rule){return `<div class="mb-fields">${['grow','spend','share'].map((b,i)=>inputField(b+'_pct',['🌱 Crecer %','🛍️ Disfrutar %','❤️ Compartir %'][i],rule[b+'_pct'],'number','min="0" max="100" step="1" required')).join('')}</div>`;}
+function readForm(form){return Object.fromEntries(new FormData(form));}
+function pctData(form){const d=readForm(form);for(const key of ['grow_pct','spend_pct','share_pct'])d[key]=Number(d[key]);if(d.grow_pct+d.spend_pct+d.share_pct!==100||[d.grow_pct,d.spend_pct,d.share_pct].some(n=>!Number.isInteger(n)||n<0||n>100))throw Error('Los porcentajes deben sumar 100%.');moneyCents(d.amount);return d;}
+function txFields(t={}){return `<div class="mb-fields">${inputField('date','Fecha',t.date||todayIso(),'date',`required min="${safe(currentChild.opening_date)}" max="${todayIso()}"`)}${selectField('bucket','Cuenta',[['grow','Crecer'],['spend','Disfrutar'],['share','Compartir']],t.bucket||'grow')}${selectField('type','Tipo',['Aporte','Bonificación','Asignación','Ingreso','Retiro','Gasto','Donación'].map(t=>[t,t]),t.type||'Aporte')}</div>${inputField('concept','Concepto',t.concept||'','text','maxlength="200" required')}${amountField('amount','Monto (USD)',t.amount||0)}${inputField('note','Nota',t.note||'','text','maxlength="2000"')}`;}
+function bindForm(form,fn){form.addEventListener('submit',async e=>{e.preventDefault();try{await fn(form,e.submitter);}catch(error){inform(friendly(error),true);}});}
+function expenseForm(bucket){const share=bucket==='share',wrap=document.createElement('div');wrap.className='feature';wrap.innerHTML=`<h3>${share?'❤️ Registrar una donación':'🛍️ Registrar un gasto'}</h3><p class="muted">Disponible: ${money(currentBalances[bucket])}. El saldo se comprueba de nuevo al guardar.</p><form>${inputField('concept',share?'¿A quién o para qué donaste?':'¿En qué lo gastaste?','','text','maxlength="200" required')}${amountField('amount','Monto (USD)')}<button class="primary">${share?'Guardar donación':'Guardar gasto'}</button></form>`;bindForm(wrap.querySelector('form'),(form,button)=>{const data=readForm(form);if(moneyCents(data.amount)<=0)throw Error('El monto debe ser mayor que cero.');return perform('expense',{...data,child_id:currentChild.id,bucket},button);});return wrap;}
+function renderOperations(){
+  for(const bucket of ['spend','share'])$(bucket+'More').insertBefore(expenseForm(bucket),$(bucket+'More').firstChild);
+  const rule=currentRule(),monthly=Number(rule.amount)*Number(rule.grow_pct)/100;
+  const simulation=document.createElement('div');simulation.className='feature';
+  simulation.innerHTML=`<h3>🚀 Tu futuro a los 18</h3><div class="stat">Con tu ahorro actual podrías tener<b id="projectionValue">${money(projection(currentChild,currentBalances.grow,monthly))}</b></div><label class="mb-label" for="extraSaving">¿Qué pasa si ahorro más? <span id="extraSavingValue">USD 0.00 / mes</span></label><input id="extraSaving" type="range" min="0" max="100" step="5" value="0"><p class="muted" id="projectionDifference">Probá sumar un poquito cada mes.</p><p class="muted">Simulación con tasa efectiva anual constante y aportes a Crecer cada día 1 futuro. Solo Crecer genera intereses. No incorpora ingresos pendientes ni reglas futuras.</p>`;
+  const movement=$('growMore').querySelector('.movement-details');$('growMore').insertBefore(simulation,movement);
+  const baseline=projection(currentChild,currentBalances.grow,monthly);
+  $('extraSaving').addEventListener('input',e=>{const extra=Number(e.target.value),value=projection(currentChild,currentBalances.grow,monthly,extra);$('projectionValue').textContent=money(value);$('extraSavingValue').textContent=money(extra)+' / mes';$('projectionDifference').textContent=money(value-baseline)+' más que con tu ahorro actual.';});
+  const chart=$('growthChart').closest('.chart-wrap');let period=$('chartPeriod');if(!period){const label=document.createElement('label');label.className='mb-label chart-period';label.textContent='Período del gráfico';period=document.createElement('select');period.id='chartPeriod';period.setAttribute('aria-label','Período del gráfico');period.innerHTML='<option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option><option value="0">Toda la historia</option>';period.value=String(chartMonths);label.appendChild(period);chart.insertBefore(label,chart.querySelector('.chart-legend'));period.addEventListener('change',()=>{chartMonths=Number(period.value);drawChart();});}
+  chart.querySelector('p').textContent='Saldo de cierre diario en escalones · Valores en USD';
+  if(administrationPage&&adminUnlocked)renderAdmin(rule);else $('adminMore').replaceChildren();
+}
+function renderAdmin(rule){
+  const tx=transactions.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))||Number(b.id)-Number(a.id)),pending=snapshotCache.pending_incomes.filter(p=>p.child_id===currentChild.id&&p.status==='pending');
+  $('adminMore').innerHTML=`<div class="feature"><h3>🔐 Administración de ${safe(currentChild.name.split(' ')[0])}</h3><p class="muted">Acceso protegido por tu sesión autorizada de Supabase. Los cambios se comparten con Streamlit.</p></div><div class="mb-admin-grid"><div class="feature"><h3>🎁 Nuevo ingreso pendiente</h3><p class="muted">Para regalos, premios y dinero recibido. Después el niño elige el reparto.</p><form id="newIncome">${inputField('date','Fecha del ingreso',todayIso(),'date',`required min="${safe(currentChild.opening_date)}"`)}${inputField('concept','Concepto','Regalo','text','maxlength="200" required')}${amountField('amount','Monto (USD)')}${pctFields(rule)}<button class="primary">Crear ingreso pendiente</button></form></div><div class="feature"><h3>💵 Mensualidad</h3><p class="muted">El día 1 se crea como ingreso pendiente. Las reglas anteriores quedan en el historial.</p><form id="allowanceRule">${inputField('date','Aplicar desde',todayIso(),'date',`required min="${safe(currentChild.opening_date)}"`)}${amountField('amount','Mensualidad (USD)',rule.amount)}${pctFields(rule)}<button class="primary">Guardar nueva regla</button></form><details><summary>Historial de reglas</summary>${activeRules.slice().sort((a,b)=>String(b.effective_from).localeCompare(String(a.effective_from))||b.id-a.id).map(r=>`<p class="muted">${safe(r.effective_from)} · ${money(r.amount)} · ${r.grow_pct}/${r.spend_pct}/${r.share_pct}%</p>`).join('')||'<p class="muted">Sin reglas.</p>'}</details></div></div><div class="feature"><h3>Ingresos pendientes</h3>${pending.map(p=>`<div class="tx"><div><b>${safe(p.concept)}</b><small>${safe(p.due_date)} · ${money(p.amount)}</small></div><button type="button" class="photo-button" data-cancel="${p.id}">Cancelar ingreso</button></div>`).join('')||'<p class="muted">No hay ingresos pendientes.</p>'}</div><div class="mb-admin-grid"><div class="feature"><h3>🛠️ Movimiento directo</h3><p class="muted">Solo para ajustes excepcionales. Para regalos usá Nuevo ingreso pendiente.</p><form id="directMovement">${txFields()}<button class="primary">Guardar movimiento directo</button></form></div><div class="feature"><h3>⚙️ Perfil y tasa</h3><form id="childProfile">${inputField('birth_date','Fecha de nacimiento',currentChild.birth_date,'date','required')}${inputField('opening_date','Fecha de apertura',currentChild.opening_date,'date',`required max="${todayIso()}"`)}${inputField('annual_rate','Tasa efectiva anual (%)',Number(currentChild.annual_rate)*100,'number','min="0" max="100" step="0.01" required')}<p class="muted">Cambiar la tasa o apertura recalcula toda la historia, igual que en Streamlit.</p><button class="primary">Guardar perfil</button></form></div></div><div class="feature"><h3>✏️ Editar movimientos</h3>${tx.length?`${selectField('editId','Movimiento',tx.map(t=>[t.id,`${t.date} · ${t.concept} · ${money(t.amount)}`]),tx[0].id)}<form id="editMovement"></form>`:'<p class="muted">No hay movimientos.</p>'}</div><div class="feature"><h3>💾 Copia de seguridad</h3><p class="muted">Descargá todas las cuentas, movimientos, reglas, ingresos y metas en un ZIP con archivos JSON, CSV y un manifiesto. Se genera a partir de una sola lectura de Supabase.</p><button type="button" id="downloadBackup" class="primary">Descargar backup completo</button><p class="muted">Guardalo en un lugar seguro. No contiene contraseñas. La restauración es manual.</p></div>`;
+  for(const [id,action] of [['newIncome','income'],['allowanceRule','rule']])bindForm($(id),(form,button)=>{const data=pctData(form);if(action==='income'&&moneyCents(data.amount)===0)throw Error('El ingreso debe ser mayor que cero.');return perform(action,{...data,child_id:currentChild.id},button);});
+  bindForm($('directMovement'),(form,button)=>{const data=readForm(form);moneyCents(data.amount);return perform('transaction',{...data,child_id:currentChild.id},button);});
+  bindForm($('childProfile'),(form,button)=>{const data=readForm(form);return perform('profile',{...data,annual_rate:Number(data.annual_rate)/100,child_id:currentChild.id,expected:currentChild},button);});
+  $('adminMore').querySelectorAll('[data-cancel]').forEach(button=>button.addEventListener('click',()=>{if(confirm('¿Cancelar este ingreso pendiente?'))void perform('cancel',{id:Number(button.dataset.cancel)},button);}));
+  if(tx.length){const selection=$('adminMore').querySelector('[name=editId]');const renderEdit=()=>{const item=tx.find(t=>t.id===Number(selection.value)),form=$('editMovement');form.innerHTML=txFields(item)+`<p class="muted">${item.source_income_id?'Este movimiento pertenece a un reparto confirmado. Su edición cambia los saldos históricos.':''}</p><button class="primary">Guardar cambios</button><button type="button" class="photo-button mb-delete" id="deleteMovement">Eliminar movimiento</button>`;form._item=item;$('deleteMovement').addEventListener('click',e=>{if(confirm('¿Eliminar este movimiento? Se recalcularán los saldos. Esta acción no tiene deshacer.'))void perform('delete',{id:item.id,expected:item},e.target);});};selection.addEventListener('change',renderEdit);renderEdit();bindForm($('editMovement'),(form,button)=>{const data=readForm(form);moneyCents(data.amount);return perform('edit',{...data,id:form._item.id,expected:form._item},button);});}
+  $('downloadBackup').addEventListener('click',async e=>{const button=e.target;button.disabled=true;try{const{data,error}=await sb.rpc('minibank_web_backup');if(error)throw error;const files={};const counts={};for(const [table,rows] of Object.entries(data.data)){counts[table]=rows.length;files[table+'.json']=JSON.stringify(rows,null,2);files[table+'.csv']=rowsToCsv(rows);}files['manifest.json']=JSON.stringify({...data,data:undefined,tables:counts},null,2);downloadFile(zipStore(files),`MiniBank_backup_${todayIso()}.zip`);inform('Backup descargado: '+Object.values(counts).reduce((a,b)=>a+b,0)+' registros en cinco tablas.');}catch(error){inform(friendly(error),true);}finally{button.disabled=false;}});
+}
+function renderPending(items){
+  const list=$('pendingList');list.replaceChildren();
+  for(const p of items){
+    const total=moneyCents(Number(p.amount).toFixed(2));let grow=Math.round(total*Number(p.grow_pct??60)/100),spend=Math.min(total-grow,Math.round(total*Number(p.spend_pct??30)/100));
+    const box=document.createElement('div');box.className='pending';
+    box.innerHTML=`<div class="pending-top"><div><strong>💵 Repartí tu dinero</strong><div class="muted">${safe(p.concept)} · ${safe(p.due_date)}</div></div><div class="pending-amount">${money(total/100)}</div></div><div class="allocation"><div class="alloc"><label for="grow-${p.id}">🌱 Crecer</label><input id="grow-${p.id}" data-grow type="number" min="0" step="0.01" max="${total/100}" value="${(grow/100).toFixed(2)}"><div class="muted">Para el futuro</div></div><div class="alloc"><label for="spend-${p.id}">🛍️ Disfrutar</label><input id="spend-${p.id}" data-spend type="number" min="0" step="0.01" max="${(total-grow)/100}" value="${(spend/100).toFixed(2)}"><div class="muted">Para usar ahora</div></div><div class="alloc"><label>❤️ Compartir</label><div data-share class="auto"></div><div class="muted">Automático</div></div></div><div data-summary class="summary" aria-live="polite"></div><button type="button" class="primary" data-confirm>✅ Repartir mi dinero</button>`;
+    const gi=box.querySelector('[data-grow]'),si=box.querySelector('[data-spend]'),summary=box.querySelector('[data-summary]'),button=box.querySelector('[data-confirm]');
+    const update=(clamp=false)=>{try{grow=moneyCents(gi.value||'0');spend=moneyCents(si.value||'0');if(clamp){grow=Math.min(total,grow);spend=Math.min(total-grow,spend);gi.value=(grow/100).toFixed(2);si.value=(spend/100).toFixed(2);}if(grow+spend>total)throw Error('El reparto supera el ingreso disponible.');si.max=((total-grow)/100).toFixed(2);const share=total-grow-spend;box.querySelector('[data-share]').textContent=money(share/100);summary.textContent=`🌱 ${money(grow/100)} · 🛍️ ${money(spend/100)} · ❤️ ${money(share/100)} · Todo repartido`;button.disabled=false;return {grow:(grow/100).toFixed(2),spend:(spend/100).toFixed(2),share:(share/100).toFixed(2)};}catch(error){summary.textContent=error.message;button.disabled=true;return null;}};
+    gi.addEventListener('input',()=>update());si.addEventListener('input',()=>update());gi.addEventListener('change',()=>update(true));si.addEventListener('change',()=>update(true));
+    button.addEventListener('click',()=>{const amounts=update(true);if(amounts)void confirmIncome(p,amounts,button);});update();list.appendChild(box);
+  }
+}
+async function confirmIncome(p,amounts,button){return perform('allocate',{id:p.id,...amounts},button);}
+function showPanel(value){if(value==='admin'&&!administrationPage){location.assign('./admin.html'+(currentChild?'?child='+currentChild.id:''));return;}if(administrationPage&&!adminUnlocked)return;activePanel=value;document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.v===value));document.querySelectorAll('[data-panel]').forEach(b=>b.classList.toggle('active',b.dataset.panel===value));for(const name of ['grow','spend','share','admin'])$(name+'Panel').classList.toggle('hidden',name!==value);if(value==='grow')requestAnimationFrame(()=>drawChart());}
+function rowsToCsv(rows){if(!rows.length)return '\ufeff';const keys=Object.keys(rows[0]),quote=v=>'"'+String(v??'').replaceAll('"','""')+'"';return '\ufeff'+[keys.map(quote).join(','),...rows.map(r=>keys.map(k=>quote(r[k])).join(','))].join('\r\n');}
+function zipStore(files){
+  const encoder=new TextEncoder(),parts=[],directory=[];let offset=0,centralSize=0;
+  const crcTable=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
+  const crc=data=>{let n=0xffffffff;for(const b of data)n=crcTable[(n^b)&255]^(n>>>8);return (n^0xffffffff)>>>0;};
+  for(const [name,value] of Object.entries(files)){const filename=encoder.encode(name),data=encoder.encode(value),checksum=crc(data),local=new Uint8Array(30+filename.length),lv=new DataView(local.buffer);lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x800,true);lv.setUint32(14,checksum,true);lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);lv.setUint16(26,filename.length,true);local.set(filename,30);parts.push(local,data);const central=new Uint8Array(46+filename.length),cv=new DataView(central.buffer);cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x800,true);cv.setUint32(16,checksum,true);cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);cv.setUint16(28,filename.length,true);cv.setUint32(42,offset,true);central.set(filename,46);directory.push(central);centralSize+=central.length;offset+=local.length+data.length;}
+  const end=new Uint8Array(22),ev=new DataView(end.buffer);ev.setUint32(0,0x06054b50,true);ev.setUint16(8,directory.length,true);ev.setUint16(10,directory.length,true);ev.setUint32(12,centralSize,true);ev.setUint32(16,offset,true);return new Blob([...parts,...directory,end],{type:'application/zip'});
+}
+function downloadFile(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+window.addEventListener('resize',()=>{if(activePanel==='grow')drawChart();});
+
+
+document.querySelectorAll('.section-btn[data-panel]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.section-btn[data-panel]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');showPanel(btn.dataset.panel)}));$('sendLink').addEventListener('click',signIn);$('logout').addEventListener('click',signOut);$('retryData').addEventListener('click',async()=>{if(writeBusy&&!needsRefresh){inform('Esperá a que termine la operación actual.');return}try{await loadChildren()}catch(e){$('dataStatus').classList.remove('hidden');$('dataStatus').textContent='Error de lectura: '+e.message}});function showLoading(){ $('adminGate').classList.add('hidden');$('loginView').classList.add('hidden');$('appView').classList.add('hidden');$('loadingView').classList.remove('hidden')}function hideLoading(){ $('loadingView').classList.add('hidden')}let adminUnlocked=false,adminExpiryTimer=null;
+function showAdminGate(message=''){
+  adminUnlocked=false;clearTimeout(adminExpiryTimer);$('appView').classList.add('hidden');hideLoading();$('loginView').classList.add('hidden');$('adminGate').classList.remove('hidden');
+  $('adminGatePassword').value='';$('adminGateStatus').textContent=message;$('adminGateStatus').classList.toggle('hidden',!message);$('adminGatePassword').focus();
+}
+async function openSession(){
+  showLoading();
+  if(administrationPage&&!adminUnlocked){
+    const {error}=await sb.rpc('minibank_admin_lock');if(error)throw error;
+    showAdminGate();return;
+  }
+  await loadChildren();hideLoading();$('appView').classList.remove('hidden');
+  requestAnimationFrame(()=>drawChart());
+}
+async function leaveAdmin(){
+  const button=$('backToAccounts');button.disabled=true;
+  try{const{error}=await sb.rpc('minibank_admin_lock');if(error)throw error;location.assign('./'+(currentChild?'?child='+currentChild.id:''));}
+  catch(error){showAdminGate(friendly(error));}finally{button.disabled=false;}
+}
+$('adminGateForm').addEventListener('submit',async e=>{
+  e.preventDefault();const button=$('adminGateSubmit');button.disabled=true;$('adminGateStatus').classList.add('hidden');
+  const password=$('adminGatePassword').value;$('adminGatePassword').value='';
+  try{
+    const{data,error}=await sb.rpc('minibank_admin_unlock',{p_password:password});if(error)throw error;
+    if(!data?.ok){showAdminGate(data?.message||'No se pudo abrir Administración.');return;}
+    adminUnlocked=true;clearTimeout(adminExpiryTimer);
+    adminExpiryTimer=setTimeout(()=>showAdminGate('La sesión de Administración venció. Ingresá la contraseña otra vez.'),Math.max(0,new Date(data.expires_at).getTime()-Date.now()));
+    $('adminGate').classList.add('hidden');await openSession();
+  }catch(error){showAdminGate(error.message||'No se pudo abrir Administración.');}
+  finally{button.disabled=false;}
+});
+$('adminGateBack').addEventListener('click',()=>location.assign('./'));
+$('backToAccounts').addEventListener('click',()=>void leaveAdmin());
+$('lockAdministration').addEventListener('click',async()=>{
+  const{error}=await sb.rpc('minibank_admin_lock');showAdminGate(error?friendly(error):'Administración bloqueada.');
+});
+
+showLoading();sb.auth.getSession().then(async({data,error})=>{
+if(error||!data.session){hideLoading();$('loginView').classList.remove('hidden');return;}
+try{await openSession();}catch(error){hideLoading();if(administrationPage){showAdminGate(error.message);}else{$('appView').classList.remove('hidden');$('dataStatus').classList.remove('hidden');$('dataStatus').textContent='No se pudieron cargar las cuentas: '+error.message;}}
+}).catch(error=>{hideLoading();$('loginView').classList.remove('hidden');$('loginStatus').classList.remove('hidden');$('loginStatus').textContent='Error de conexión: '+error.message;});
+})();
+</script>
+</body>
+</html>
