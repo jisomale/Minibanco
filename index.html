@@ -433,6 +433,10 @@ $('backToAccounts').addEventListener('click',()=>void leaveAdmin());
 $('lockAdministration').addEventListener('click',async()=>{
   const{error}=await sb.rpc('minibank_admin_lock');showAdminGate(error?friendly(error):'Administración bloqueada.');
 });
+// History restoration must ask for the password again, too.
+window.addEventListener('pageshow',event=>{
+  if(administrationPage&&event.persisted){adminUnlocked=false;void openSession().catch(error=>showAdminGate(friendly(error)));}
+});
 
 showLoading();sb.auth.getSession().then(async({data,error})=>{
 if(error||!data.session){hideLoading();$('loginView').classList.remove('hidden');return;}
